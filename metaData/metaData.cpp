@@ -10,15 +10,17 @@
 #define MAX_LOADSTRING 100
 
 // Global Variables
-HINSTANCE hInst;                                // Current instance
-HWND hWnd;                                      // Main window handler
-WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
-WCHAR szWindowClass[MAX_LOADSTRING];            // The main window class name
-Console gConsole;                               // Console text
+HINSTANCE hInst;                            // Current instance
+HWND hWnd;                                  // Main window handler
+WCHAR szTitle[MAX_LOADSTRING];              // The title bar text
+WCHAR szWindowClass[MAX_LOADSTRING];        // The main window class name
+
+Console gConsole;                           // Console text
 
 // Forward declarations of functions included in this code module
-ATOM                MyRegisterClass(HINSTANCE hInstance);
+LRESULT CALLBACK    HookCallback(int code, WPARAM wParam, LPARAM lParam);
 HWND                InitInstance(HINSTANCE, int);
+ATOM                MyRegisterClass(HINSTANCE hInstance);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -41,13 +43,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return FALSE;
     }
 
-    SetTimer(hWnd, 1, 1000, (TIMERPROC) NULL);
-
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_METADATA));
 
-    MSG msg;
+    HHOOK gHookId = SetWindowsHookEx(WH_KEYBOARD_LL, HookCallback, hInstance, 0);
 
     // Main message loop
+    MSG msg;
     while (GetMessage(&msg, nullptr, 0, 0))
     {
         if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
@@ -56,6 +57,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             DispatchMessage(&msg);
         }
     }
+
+    UnhookWindowsHookEx(gHookId);
 
     return (int) msg.wParam;
 }
@@ -130,29 +133,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case VK_ESCAPE:
             PostQuitMessage(0);
             break;
-        default:
-            std::stringstream ss;
-            ss << char(wParam);
-            gConsole.append(ss.str(), hWnd);
-        }
-    case WM_TIMER:
-        switch (wParam)
-        {
-        case 1:
-            time_t ltime;
-            struct tm today;
-
-            time(&ltime);
-            _localtime64_s(&today, &ltime);
- 
-            std::stringstream ss;
-            ss << today.tm_sec;
-
-            gConsole.append(ss.str(), hWnd);
-            return 0;
         }
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
     return 0;
+}
+
+LRESULT CALLBACK HookCallback(int code, WPARAM wParam, LPARAM lParam)
+{
+    if (code >= 0 && wParam == WM_KEYDOWN)
+    {
+        KBDLLHOOKSTRUCT* keyStruct = (KBDLLHOOKSTRUCT*)lParam;
+
+#if 0
+        std::stringstream ss;
+        ss << "vkCode: " << keyStruct->vkCode << std::endl;
+        OutputDebugStringA(ss.str().c_str());
+#endif
+        // mem.KeyEvent(vkCode);
+    }
+    return CallNextHookEx(NULL, code, wParam, lParam);
 }
