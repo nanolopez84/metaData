@@ -3,11 +3,18 @@
 #include "framework.h"
 #include "metaData.h"
 
+#include <shellapi.h>
+
 #include <sstream>
+#include <map>
+#include <vector>
 
 #include "Console.h"
 
-#define MAX_LOADSTRING 100
+#define MAX_LOADSTRING  100
+#define PROGRAM_NAME    "metaData"
+
+typedef std::map<std::string, int> MAP_TARGET;
 
 // Global Variables
 HINSTANCE hInst;                            // Current instance
@@ -16,11 +23,14 @@ WCHAR szTitle[MAX_LOADSTRING];              // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];        // The main window class name
 
 Console gConsole;                           // Console text
+MAP_TARGET gTargets;                        // Available targets
 
 // Forward declarations of functions included in this code module
 LRESULT CALLBACK    HookCallback(int code, WPARAM wParam, LPARAM lParam);
+void                InitConfiguration(LPWSTR lpCmdLine);
 HWND                InitInstance(HINSTANCE, int);
 ATOM                MyRegisterClass(HINSTANCE hInstance);
+void                Usage();
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -32,8 +42,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     // Initialize global strings
-    LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_METADATA, szWindowClass, MAX_LOADSTRING);
+    LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
+    LoadString(hInstance, IDC_METADATA, szWindowClass, MAX_LOADSTRING);
+
+    InitConfiguration(lpCmdLine);
+
     MyRegisterClass(hInstance);
 
     // Perform application initialization
@@ -93,7 +106,7 @@ HWND InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // Store instance handle in our global variable
 
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_MINIMIZEBOX | WS_SYSMENU,
+   HWND hWnd = CreateWindow(szWindowClass, szTitle, WS_MINIMIZEBOX | WS_SYSMENU,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
@@ -121,6 +134,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
             gConsole.paint(hdc, ps);
+            InvalidateRect(hWnd, NULL, TRUE);
+            UpdateWindow(hWnd);
             EndPaint(hWnd, &ps);
         }
         break;
@@ -134,6 +149,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             PostQuitMessage(0);
             break;
         }
+        break;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
@@ -154,4 +170,67 @@ LRESULT CALLBACK HookCallback(int code, WPARAM wParam, LPARAM lParam)
         // mem.KeyEvent(vkCode);
     }
     return CallNextHookEx(NULL, code, wParam, lParam);
+}
+
+void InitConfiguration(LPWSTR lpCmdLine)
+{
+    gTargets.insert(MAP_TARGET::value_type("ninja", 1));
+
+    LPWSTR* szArglist;
+    int nArgs;
+    szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
+    if (NULL == szArglist)
+    {
+        gConsole.append("Press ESC to exit");
+        gConsole.append("");
+        gConsole.append("Error parsing arguments");
+        return;
+    }
+    else if (nArgs == 2)
+    {
+        Usage();
+    }
+    else
+    {
+        OutputDebugString(szArglist[1]);
+    }
+
+    LocalFree(szArglist);
+}
+
+void Usage()
+{
+    /*
+    * The Console keeps showing lines in reverse so a buffering and reordering
+    * is needed to display a multi-line message
+    */
+
+    std::stringstream ss;
+    std::vector<std::string> lines;
+
+    lines.push_back("Usage:");
+
+    ss << PROGRAM_NAME << " <target>";
+    lines.push_back(ss.str());
+
+    lines.push_back("");
+    lines.push_back("Example:");
+
+    ss.str("");
+    ss.clear();
+    ss << PROGRAM_NAME << " ninja";
+    lines.push_back(ss.str());
+
+    lines.push_back("");
+    lines.push_back("Available targets:");
+    lines.push_back("ninja                Mark of the Ninja");
+    lines.push_back("re2                  Resident Evil 2 (Remake)");
+
+    lines.push_back("");
+    lines.push_back("Press ESC to exit");
+
+    for (auto it = lines.rbegin(); it != lines.rend(); ++it)
+    {
+        gConsole.append(*it);
+    }
 }

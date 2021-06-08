@@ -2,20 +2,19 @@
 
 Console::Console()
 {
+    m_hFont = CreateFont(16, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
+        OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Courier new"));
+
     m_lines.resize(0);
 }
 
-void Console::append(const std::string& s, HWND hWnd)
+void Console::append(const std::string& s)
 {
     m_lines.push_back(s);
     if (m_lines.size() > Console::MAX_LINES)
     {
         m_lines.pop_front();
     }
-
-    // Force repaint
-    InvalidateRect(hWnd, NULL, TRUE);
-    UpdateWindow(hWnd);
 }
 
 void Console::paint(HDC hdc, PAINTSTRUCT ps)
@@ -25,6 +24,7 @@ void Console::paint(HDC hdc, PAINTSTRUCT ps)
 
     SetBkColor(hdc, COLOR_TEXT_BACKGROUND);
     SetTextColor(hdc, COLOR_TEXT_FOREGROUND);
+    SelectObject(hdc, m_hFont);
 
     int i = 0;
     for(auto it = m_lines.rbegin(); it != m_lines.rend(); ++it)
