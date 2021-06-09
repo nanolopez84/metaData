@@ -8,11 +8,10 @@
 #include <sstream>
 #include <map>
 #include <vector>
-
-#include "Console.h"
+#include <memory>
+#include <list>
 
 #define MAX_LOADSTRING  100
-#define PROGRAM_NAME    "metaData"
 
 typedef std::map<std::string, int> MAP_TARGET;
 
@@ -22,8 +21,9 @@ HWND hWnd;                                  // Main window handler
 WCHAR szTitle[MAX_LOADSTRING];              // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];        // The main window class name
 
-Console gConsole;                           // Console text
-MAP_TARGET gTargets;                        // Available targets
+Console g_console;                          // Console text
+Context g_state;		                    // Program state
+MAP_TARGET g_targets;                       // Available targets
 
 // Forward declarations of functions included in this code module
 LRESULT CALLBACK    HookCallback(int code, WPARAM wParam, LPARAM lParam);
@@ -133,22 +133,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
-            gConsole.paint(hdc, ps);
-            InvalidateRect(hWnd, NULL, TRUE);
-            UpdateWindow(hWnd);
+            g_console.paint(hdc, ps);
             EndPaint(hWnd, &ps);
         }
         break;
     case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-    case WM_KEYDOWN:
-        switch (wParam)
-        {
-        case VK_ESCAPE:
-            PostQuitMessage(0);
-            break;
-        }
+        Exit(0);
         break;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
@@ -160,39 +150,41 @@ LRESULT CALLBACK HookCallback(int code, WPARAM wParam, LPARAM lParam)
 {
     if (code >= 0 && wParam == WM_KEYDOWN)
     {
-        KBDLLHOOKSTRUCT* keyStruct = (KBDLLHOOKSTRUCT*)lParam;
-
 #if 0
         std::stringstream ss;
         ss << "vkCode: " << keyStruct->vkCode << std::endl;
         OutputDebugStringA(ss.str().c_str());
 #endif
-        // mem.KeyEvent(vkCode);
+
+        KBDLLHOOKSTRUCT* keyStruct = (KBDLLHOOKSTRUCT*)lParam;
+        g_state.update(keyStruct->vkCode);
     }
     return CallNextHookEx(NULL, code, wParam, lParam);
 }
 
 void InitConfiguration(LPWSTR lpCmdLine)
 {
-    gTargets.insert(MAP_TARGET::value_type("ninja", 1));
+    g_targets.insert(MAP_TARGET::value_type("ninja", 1));
 
     LPWSTR* szArglist;
     int nArgs;
     szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
     if (NULL == szArglist)
     {
-        gConsole.append("Press ESC to exit");
-        gConsole.append("");
-        gConsole.append("Error parsing arguments");
+        g_state.setState(Context::STATES::ERR);
+
+        g_console.append("Press ESC to exit");
+        g_console.append("");
+        g_console.append("Error parsing arguments");
         return;
     }
-    else if (nArgs == 2)
+    else if (nArgs != 2)
     {
         Usage();
     }
     else
     {
-        OutputDebugString(szArglist[1]);
+        g_state.setState(Context::STATES::WORKING);
     }
 
     LocalFree(szArglist);
@@ -200,6 +192,8 @@ void InitConfiguration(LPWSTR lpCmdLine)
 
 void Usage()
 {
+    g_state.setState(Context::STATES::ERR);
+
     /*
     * The Console keeps showing lines in reverse so a buffering and reordering
     * is needed to display a multi-line message
@@ -231,6 +225,17 @@ void Usage()
 
     for (auto it = lines.rbegin(); it != lines.rend(); ++it)
     {
-        gConsole.append(*it);
+        g_console.append(*it);
     }
+}
+
+void InvalidateScreen()
+{
+    InvalidateRect(hWnd, NULL, TRUE);
+    UpdateWindow(hWnd);
+}
+
+void Exit(int nExitCode)
+{
+    PostQuitMessage(nExitCode);
 }

@@ -1,5 +1,7 @@
 #include "Console.h"
 
+#include "metaData.h"
+
 Console::Console()
 {
     m_hFont = CreateFont(16, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
@@ -15,6 +17,8 @@ void Console::append(const std::string& s)
     {
         m_lines.pop_front();
     }
+
+    InvalidateScreen();
 }
 
 void Console::paint(HDC hdc, PAINTSTRUCT ps)

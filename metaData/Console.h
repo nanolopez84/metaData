@@ -12,7 +12,7 @@ private:
 	const COLORREF COLOR_TEXT_BACKGROUND = COLOR_CONSOLE_BACKGROUND;
 	const COLORREF COLOR_TEXT_FOREGROUND = RGB(77, 166, 66);
 	const int CONSOLE_LINE_SPACE = 18;
-	const int MAX_LINES = 36;
+	const size_t MAX_LINES = 36;
 
 	HFONT m_hFont;
 	std::list<std::string> m_lines;
