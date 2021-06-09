@@ -14,6 +14,7 @@ protected:
 	
 public:
 	State(Context& context);
+	virtual ~State() {}
 	virtual void update(WPARAM vkCode) = 0;
 };
 
@@ -21,6 +22,7 @@ class InitState : public State
 {
 public:
 	InitState(Context& context);
+	virtual ~InitState() {}
 	virtual void update(WPARAM vkCode);
 };
 
@@ -28,6 +30,7 @@ class ErrState : public State
 {
 public:
 	ErrState(Context& context);
+	virtual ~ErrState() {}
 	virtual void update(WPARAM vkCode);
 };
 
@@ -35,6 +38,7 @@ class WorkingState : public State
 {
 public:
 	WorkingState(Context& context);
+	virtual ~WorkingState() {}
 	virtual void update(WPARAM vkCode);
 };
 

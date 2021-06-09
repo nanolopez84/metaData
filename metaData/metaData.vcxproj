@@ -142,6 +142,7 @@
   <ItemGroup>
     <ClInclude Include="Console.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="Memory.h" />
     <ClInclude Include="metaData.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="State.h" />
@@ -149,6 +150,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Console.cpp" />
+    <ClCompile Include="Memory.cpp" />
     <ClCompile Include="metaData.cpp" />
     <ClCompile Include="State.cpp" />
   </ItemGroup>

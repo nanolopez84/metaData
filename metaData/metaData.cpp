@@ -11,6 +11,8 @@
 #include <memory>
 #include <list>
 
+#include "Memory.h"
+
 #define MAX_LOADSTRING  100
 
 typedef std::map<std::string, int> MAP_TARGET;
@@ -24,6 +26,7 @@ WCHAR szWindowClass[MAX_LOADSTRING];        // The main window class name
 Console g_console;                          // Console text
 Context g_state;		                    // Program state
 MAP_TARGET g_targets;                       // Available targets
+std::unique_ptr<Memory> g_memory;           // Game target memory access
 
 // Forward declarations of functions included in this code module
 LRESULT CALLBACK    HookCallback(int code, WPARAM wParam, LPARAM lParam);
@@ -58,7 +61,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_METADATA));
 
-    HHOOK gHookId = SetWindowsHookEx(WH_KEYBOARD_LL, HookCallback, hInstance, 0);
+    HHOOK hookId = SetWindowsHookEx(WH_KEYBOARD_LL, HookCallback, hInstance, 0);
 
     // Main message loop
     MSG msg;
@@ -71,7 +74,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
     }
 
-    UnhookWindowsHookEx(gHookId);
+    UnhookWindowsHookEx(hookId);
 
     return (int) msg.wParam;
 }
@@ -185,6 +188,7 @@ void InitConfiguration(LPWSTR lpCmdLine)
     else
     {
         g_state.setState(Context::STATES::WORKING);
+        g_memory = Memory::AttachProcess(szArglist[1]);
     }
 
     LocalFree(szArglist);
