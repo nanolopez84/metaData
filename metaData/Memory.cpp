@@ -1,15 +1,19 @@
 #include "Memory.h"
 
 #include <tlhelp32.h>
+#include <psapi.h>
 
 #include <string>
+#include <fstream>
+#include <filesystem>
 
 #include "State.h"
 
 extern Context g_state;
 
 Memory::Memory(const std::wstring& targetProcessName)
-    : m_processWindowHandle(NULL), m_targetProcessName(targetProcessName), m_processPID(0)
+    : m_processWindowHandle(NULL), m_targetProcessName(targetProcessName), m_processPID(0),
+    m_imageName(L""), m_baseAddress(0)
 {
     this->attachProcess();
 }
@@ -24,12 +28,77 @@ Memory::~Memory()
 
 void Memory::attachProcess()
 {
-    this->getProcessByName();
-
-    if (!m_processWindowHandle)
+    try
+    {
+        this->getProcessByName();
+        this->checkHash();
+        this->getBaseAddress();
+    }
+    catch (std::string& msg)
     {
         g_state.setState(Context::STATES::ERR);
-        g_state.setErrorMessage("Error attaching to process");
+        g_state.setErrorMessage(msg);
+    }
+}
+
+void Memory::checkHash()
+{
+    std::map<std::wstring, unsigned long long> hashes = {
+        { L"ninja", 10504905621138366064 }
+    };
+
+    LPWSTR imageName = new WCHAR[2048];
+    DWORD imageNameSize = 2048;
+    QueryFullProcessImageNameW(m_processWindowHandle, 0, imageName, &imageNameSize);
+
+    std::filesystem::path p{imageName};
+    uintmax_t size = std::filesystem::file_size(p);
+
+    std::string buffer;
+    buffer.resize(static_cast<const unsigned int>(size));
+
+    std::ifstream input(imageName, std::ios::binary);
+    input.read(&buffer[0], size);
+
+    m_imageName = std::wstring(imageName);
+    delete[] imageName;
+
+    size_t hash = std::hash<std::string>{}(buffer);
+
+    if (hash != hashes[m_targetProcessName])
+    {
+        throw std::string("Executable version not supported");
+    }
+}
+
+void Memory::getBaseAddress()
+{
+    HMODULE lphModule[1024];
+    DWORD lpcbNeeded = 0;
+
+    if (!EnumProcessModulesEx(m_processWindowHandle, lphModule, sizeof(lphModule), &lpcbNeeded, LIST_MODULES_ALL))
+    {
+        throw std::string("List modules ERROR");
+    }
+
+    int moduleCount = lpcbNeeded / sizeof(long);
+    LPWSTR moduleFileName = new WCHAR[1024];
+    int moduleFileNameSize;
+    std::wstring moduleFileNameStr;
+    for (int i = 0; i < moduleCount; i++)
+    {
+        moduleFileNameSize = GetModuleFileNameEx(m_processWindowHandle, lphModule[i], moduleFileName, 1024);
+        moduleFileNameStr = std::wstring(moduleFileName);
+        if (m_imageName.compare(moduleFileNameStr) == 0)
+        {
+            m_baseAddress = (uint64_t) lphModule[i];
+            break;
+        }
+    }
+
+    if (m_baseAddress == 0)
+    {
+        throw std::string("Base address not found");
     }
 }
 
@@ -43,9 +112,7 @@ void Memory::getProcessByName()
 
     if (targetExecName.length() == 0)
     {
-        g_state.setState(Context::STATES::ERR);
-        g_state.setErrorMessage("Error getting process name");
-        return;
+        throw std::string("Error getting process name");
     }
 
     PROCESSENTRY32 entry;
@@ -60,11 +127,17 @@ void Memory::getProcessByName()
             {
                 m_processWindowHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
                 m_processPID = entry.th32ProcessID;
+                break;
             }
         }
     }
 
     CloseHandle(snapshot);
+
+    if (!m_processWindowHandle)
+    {
+        throw std::string("Error attaching to process");
+    }
 }
 
 NinjaMemory::NinjaMemory(const std::wstring& targetProcessName)

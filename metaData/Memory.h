@@ -11,9 +11,13 @@ class Memory
 {
 protected:
     void attachProcess();
+    void checkHash();
+    void getBaseAddress();
     void getProcessByName();
 
 public:
+    uint64_t m_baseAddress;
+    std::wstring m_imageName;
     DWORD m_processPID;
     HANDLE m_processWindowHandle;
     std::wstring m_targetProcessName;

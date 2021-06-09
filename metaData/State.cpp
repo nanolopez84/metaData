@@ -46,9 +46,9 @@ void WorkingState::update(WPARAM vkCode)
 Context::Context()
 	: m_currentState(nullptr)
 {
-	m_states.insert(std::pair(Context::STATES::INIT, std::make_shared<InitState>(*this)));
-	m_states.insert(std::pair(Context::STATES::ERR, std::make_shared<ErrState>(*this)));
-	m_states.insert(std::pair(Context::STATES::WORKING, std::make_shared<WorkingState>(*this)));
+	m_states.insert(std::pair<Context::STATES, std::shared_ptr<State>>(Context::STATES::INIT, std::make_shared<InitState>(*this)));
+	m_states.insert(std::pair<Context::STATES, std::shared_ptr<State>>(Context::STATES::ERR, std::make_shared<ErrState>(*this)));
+	m_states.insert(std::pair<Context::STATES, std::shared_ptr<State>>(Context::STATES::WORKING, std::make_shared<WorkingState>(*this)));
 
 	this->setState(Context::STATES::INIT);
 }
