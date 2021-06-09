@@ -9,18 +9,27 @@ extern Console g_console;
 
 class Memory
 {
+protected:
+    void attachProcess();
+    void getProcessByName();
+
 public:
-	static std::unique_ptr<Memory> AttachProcess(LPWSTR targetProcessName);
-    virtual ~Memory() {}
+    DWORD m_processPID;
+    HANDLE m_processWindowHandle;
+    std::wstring m_targetProcessName;
+
+    Memory(const std::wstring& targetProcessName);
+    virtual ~Memory();
 };
 
-typedef std::unique_ptr<Memory> (__stdcall *CreateMemoryFn)(void);
+typedef std::unique_ptr<Memory> (__stdcall *CreateMemoryFn)(const std::wstring& targetProcessName);
 
 class NinjaMemory : public Memory
 {
 public:
+    NinjaMemory(const std::wstring& targetProcessName);
     virtual ~NinjaMemory() {}
-    static std::unique_ptr<Memory> __stdcall Create();
+    static std::unique_ptr<Memory> __stdcall Create(const std::wstring& targetProcessName);
 };
 
 class MemoryFactory
@@ -33,6 +42,6 @@ private:
 public:
     static MemoryFactory& Get();
 
-    void Register(const std::wstring& targetProcessName, CreateMemoryFn pfnCreate);
-    std::unique_ptr<Memory> CreateMemory(const std::wstring& targetProcessName);
+    void registerConstructor(const std::wstring& targetProcessName, CreateMemoryFn pfnCreate);
+    std::unique_ptr<Memory> createMemory(const std::wstring& targetProcessName);
 };

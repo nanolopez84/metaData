@@ -53,6 +53,13 @@ Context::Context()
 	this->setState(Context::STATES::INIT);
 }
 
+void Context::setErrorMessage(const std::string& message)
+{
+	g_console.append("Press ESC to exit");
+	g_console.append("");
+	g_console.append(message);
+}
+
 void Context::setState(Context::STATES state)
 {
 	m_currentState = m_states[state];

@@ -175,10 +175,7 @@ void InitConfiguration(LPWSTR lpCmdLine)
     if (NULL == szArglist)
     {
         g_state.setState(Context::STATES::ERR);
-
-        g_console.append("Press ESC to exit");
-        g_console.append("");
-        g_console.append("Error parsing arguments");
+        g_state.setErrorMessage("Error parsing arguments");
         return;
     }
     else if (nArgs != 2)
@@ -188,7 +185,7 @@ void InitConfiguration(LPWSTR lpCmdLine)
     else
     {
         g_state.setState(Context::STATES::WORKING);
-        g_memory = Memory::AttachProcess(szArglist[1]);
+        g_memory = MemoryFactory::Get().createMemory(szArglist[1]);
     }
 
     LocalFree(szArglist);

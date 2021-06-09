@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <map>
+#include <string>
 
 class Context;
 
@@ -55,6 +56,7 @@ public:
 	};
 
 	Context();
+	void setErrorMessage(const std::string& message);
 	void setState(Context::STATES state);
 	void update(WPARAM vkCode);
 
