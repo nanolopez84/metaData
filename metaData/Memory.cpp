@@ -17,8 +17,10 @@ Memory::Memory(const std::wstring& targetProcessName)
     : m_processHandle(NULL), m_targetProcessName(targetProcessName), m_processPID(0),
     m_imageName(L""), m_baseAddress(0)
 {
+    this->createConfiguration();
     this->attachProcess();
     this->loadKeyMapping();
+    m_configuration.clear();
 }
 
 Memory::~Memory()
@@ -38,12 +40,9 @@ void Memory::attachProcess()
 
 void Memory::checkHash()
 {
-    std::map<std::wstring, unsigned long long> hashes = {
-        { L"ninja", 10504905621138366064 }
-    };
-
-    LPWSTR imageName = new WCHAR[2048];
     DWORD imageNameSize = 2048;
+    WCHAR imageName[2048];
+
     QueryFullProcessImageNameW(m_processHandle, 0, imageName, &imageNameSize);
 
     std::filesystem::path p{imageName};
@@ -56,14 +55,20 @@ void Memory::checkHash()
     input.read(&buffer[0], size);
 
     m_imageName = std::wstring(imageName);
-    delete[] imageName;
 
-    size_t hash = std::hash<std::string>{}(buffer);
+    size_t hashCalculated = std::hash<std::string>{}(buffer);
 
-    if (hash != hashes[m_targetProcessName])
+    uint64_t hashOriginal = std::strtoull(m_configuration[m_targetProcessName][Memory::CONIFG::HASH].c_str(), NULL, 10);
+    if (hashOriginal != hashCalculated)
     {
         throw std::string("Executable version not supported");
     }
+}
+
+void Memory::createConfiguration()
+{
+    // Hash - Executable name - Key mapping config file action prefix
+    m_configuration[L"ninja"] = { "10504905621138366064", "Ninja.exe", "NINJA" };
 }
 
 void Memory::getBaseAddress()
@@ -99,11 +104,8 @@ void Memory::getBaseAddress()
 
 void Memory::getProcessByName()
 {
-    std::map<std::wstring, std::wstring> execNames = {
-        { L"ninja", L"Ninja.exe" }
-    };
-
-    std::wstring targetExecName = execNames[m_targetProcessName];
+    std::string& s = m_configuration[m_targetProcessName][Memory::CONIFG::EXEC_NAME];
+    std::wstring targetExecName(s.begin(), s.end());
 
     if (targetExecName.length() == 0)
     {
@@ -148,11 +150,7 @@ void Memory::loadKeyMapping()
         return;
     }
 
-    std::map<std::wstring, std::string> mapPrefix{
-        {L"ninja", "NINJA"}
-    };
-
-    std::string prefix = mapPrefix[m_targetProcessName];
+    std::string prefix = m_configuration[m_targetProcessName][Memory::CONIFG::PREFIX];
     std::string line;
     std::string action;
     std::string vkCode;

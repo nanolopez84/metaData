@@ -10,20 +10,30 @@
 
 typedef std::map<WPARAM, std::string>                       MAP_KEY;
 typedef std::map<std::string, std::function<void(void)>>    MAP_METHOD;
+typedef std::map<std::wstring, std::vector<std::string>>     MEM_CONFIG;
 
 class Memory
 {
 protected:
-    uint64_t        m_baseAddress;
-    std::wstring    m_imageName;
-    MAP_KEY         m_mapKey;
-    MAP_METHOD      m_mapMethod;
-    HANDLE          m_processHandle;
-    DWORD           m_processPID;
-    std::wstring    m_targetProcessName;
+    enum CONIFG
+    {
+        HASH = 0,
+        EXEC_NAME,
+        PREFIX
+    };
+
+    uint64_t            m_baseAddress;
+    MEM_CONFIG          m_configuration;
+    std::wstring        m_imageName;
+    MAP_KEY             m_mapKey;
+    MAP_METHOD          m_mapMethod;
+    HANDLE              m_processHandle;
+    DWORD               m_processPID;
+    std::wstring        m_targetProcessName;
 
     void attachProcess();
     void checkHash();
+    void createConfiguration();
     void getBaseAddress();
     void getProcessByName();
     void loadKeyMapping();

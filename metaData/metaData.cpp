@@ -205,10 +205,10 @@ void CreateKeyMappingFile()
 
     if (!fout.bad())
     {
-        fout << std::left << std::setw(width) << "NINJA_INSTANT_CAST_OFF" << 'X' << std::endl;
-        fout << std::left << std::setw(width) << "NINJA_INSTANT_CAST_ON" << 'C' << std::endl;
+        fout << std::left << std::setw(width) << "NINJA_INSTANT_CAST_OFF"       << 'X' << std::endl;
+        fout << std::left << std::setw(width) << "NINJA_INSTANT_CAST_ON"        << 'C' << std::endl;
         fout << std::left << std::setw(width) << "NINJA_INFINITE_INVENTORY_OFF" << 'Z' << std::endl;
-        fout << std::left << std::setw(width) << "NINJA_INFINITE_INVENTORY_ON" << 'V' << std::endl;
+        fout << std::left << std::setw(width) << "NINJA_INFINITE_INVENTORY_ON"  << 'V' << std::endl;
     }
 
     g_console.append("Press ESC to exit");
