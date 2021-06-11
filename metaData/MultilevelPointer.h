@@ -14,21 +14,20 @@
 class MultilevelPointer
 {
 protected:
-    uint64_t                                m_baseAddress;
-    std::vector<uint8_t>                    m_buffer;
-    uint64_t                                m_effectiveAddress;
-    std::unique_ptr<std::vector<uint8_t>>   m_offsets;
-    HANDLE                                  m_processHandler;
+    uint64_t                m_baseAddress;
+    std::vector<uint8_t>    m_buffer;
+    uint64_t                m_effectiveAddress;
+    std::vector<uint64_t>   m_offsets;
+    HANDLE                  m_processHandler;
 
     void resizeBuffer(SIZE_T newSize);
     void update();
 
 public:
-    MultilevelPointer(HANDLE processHandler, uint64_t baseAddress,
-        std::unique_ptr<std::vector<uint8_t>> offsets = nullptr);
-    void        getBytes(std::vector<uint8_t>& buffer, size_t count);
+    MultilevelPointer(HANDLE processHandler, uint64_t baseAddress, const std::vector<uint64_t>& offsets = std::vector<uint64_t>());
+    void        getBytes(std::vector<uint8_t>& buffer, size_t count, uint64_t offset = 0);
     uint64_t    getLong();
     bool        readProcessMemory(SIZE_T bytesToRead = sizeof(uint64_t), uint64_t address = 0);
-    bool        setBytes(std::vector<uint8_t>& buffer);
+    bool        setBytes(std::vector<uint8_t>& buffer, uint64_t offset = 0);
     bool        writeProcessMemory(std::vector<uint8_t>& buffer, uint64_t address = 0);
 };

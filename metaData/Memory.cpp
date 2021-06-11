@@ -238,7 +238,7 @@ RE2Memory::RE2Memory(const std::wstring& targetProcessName)
 {
     m_mpDamage          = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0xF99DF8);
     m_mpFullDamage      = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0xF99DE4);
-    m_mpHealth          = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x0);
+    m_mpHealth          = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x70A0948, std::vector<uint64_t>{ 0x50, 0x20 });
     m_mpKillAll         = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x0);
     m_mpShots           = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x51A39A);
 
@@ -277,6 +277,8 @@ void RE2Memory::normalDamage()
 
 void RE2Memory::restoreHealth()
 {
+    std::vector<uint8_t> buffer = std::vector<uint8_t>{ 0xB0, 0x04, 0x00, 0x00 };
+    g_console.printResult(m_mpHealth->setBytes(buffer, 0x58), "RE2_RESTORE_HEALTH");
 }
 
 void RE2Memory::shotsInfinite()

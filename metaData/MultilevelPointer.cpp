@@ -2,18 +2,16 @@
 
 
 MultilevelPointer::MultilevelPointer(HANDLE processHandler, uint64_t baseAddress,
-    std::unique_ptr<std::vector<uint8_t>> offsets)
-    : m_processHandler(processHandler), m_baseAddress(baseAddress)
+    const std::vector<uint64_t>& offsets)
+    : m_processHandler(processHandler), m_baseAddress(baseAddress), m_offsets(offsets)
 {
-    m_offsets = offsets ? std::move(offsets) : std::make_unique<std::vector<uint8_t>>();
-
     this->resizeBuffer(sizeof(uint64_t));
 }
 
-void MultilevelPointer::getBytes(std::vector<uint8_t>& buffer, size_t bytesToRead)
+void MultilevelPointer::getBytes(std::vector<uint8_t>& buffer, size_t bytesToRead, uint64_t offset)
 {
     this->update();
-    this->readProcessMemory(bytesToRead, m_effectiveAddress);
+    this->readProcessMemory(bytesToRead, m_effectiveAddress + offset);
     std::copy_n(m_buffer.begin(), bytesToRead, buffer.begin());
 }
 
@@ -21,7 +19,7 @@ uint64_t MultilevelPointer::getLong()
 {
     this->resizeBuffer(sizeof(uint64_t));
 
-    uint8_t  i1 = (uint8_t) (m_buffer[0] | m_buffer[1] << 8 | m_buffer[2] << 16 | m_buffer[3] << 24);
+    uint32_t i1 = (uint32_t)(m_buffer[0] | m_buffer[1] << 8 | m_buffer[2] << 16 | m_buffer[3] << 24);
     uint64_t i2 = (uint64_t)(m_buffer[4] | m_buffer[5] << 8 | m_buffer[6] << 16 | m_buffer[7] << 24) << 32;
     return (uint64_t)i1 + i2;
 }
@@ -41,10 +39,10 @@ void MultilevelPointer::resizeBuffer(SIZE_T newSize)
     }
 }
 
-bool MultilevelPointer::setBytes(std::vector<uint8_t>& buffer)
+bool MultilevelPointer::setBytes(std::vector<uint8_t>& buffer, uint64_t offset)
 {
     this->update();
-    return this->writeProcessMemory(buffer);
+    return this->writeProcessMemory(buffer, m_effectiveAddress + offset);
 }
 
 bool MultilevelPointer::writeProcessMemory(std::vector<uint8_t>& buffer, uint64_t address)
@@ -56,9 +54,32 @@ bool MultilevelPointer::writeProcessMemory(std::vector<uint8_t>& buffer, uint64_
 
 void MultilevelPointer::update()
 {
-    if (m_offsets->size() == 0)
+    m_effectiveAddress = m_baseAddress;
+
+    if (m_offsets.size() == 0)
     {
-        m_effectiveAddress = m_baseAddress;
         return;
+    }
+
+    SIZE_T bytesToRead = sizeof(uint64_t);
+
+    if (!this->readProcessMemory(bytesToRead, m_effectiveAddress))
+    {
+        m_effectiveAddress = 0;
+        return;
+    }
+    m_effectiveAddress = this->getLong();
+
+    for(auto offset : m_offsets)
+    {
+        m_effectiveAddress += offset;
+
+        if (!this->readProcessMemory(bytesToRead, m_effectiveAddress))
+        {
+            m_effectiveAddress = 0;
+            return;
+        }
+
+        m_effectiveAddress = this->getLong();
     }
 }
