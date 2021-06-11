@@ -1,11 +1,11 @@
 #include "State.h"
 
-#include <sstream>
-
 #include "metaData.h"
 #include "Console.h"
+#include "Memory.h"
 
-extern Console g_console;
+extern Console					g_console;
+extern std::unique_ptr<Memory>	g_memory;
 
 State::State(Context& context)
 	: m_context(context)
@@ -41,14 +41,15 @@ WorkingState::WorkingState(Context& context)
 
 void WorkingState::update(WPARAM vkCode)
 {
+	g_memory->update(vkCode);
 }
 
 Context::Context()
 	: m_currentState(nullptr)
 {
-	m_states.insert(std::pair<Context::STATES, std::shared_ptr<State>>(Context::STATES::INIT, std::make_shared<InitState>(*this)));
-	m_states.insert(std::pair<Context::STATES, std::shared_ptr<State>>(Context::STATES::ERR, std::make_shared<ErrState>(*this)));
-	m_states.insert(std::pair<Context::STATES, std::shared_ptr<State>>(Context::STATES::WORKING, std::make_shared<WorkingState>(*this)));
+	m_states[Context::STATES::INIT]		= std::make_shared<InitState>(*this);
+	m_states[Context::STATES::ERR]		= std::make_shared<ErrState>(*this);
+	m_states[Context::STATES::WORKING]	= std::make_shared<WorkingState>(*this);
 
 	this->setState(Context::STATES::INIT);
 }

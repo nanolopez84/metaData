@@ -145,6 +145,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="metaData.h" />
+    <ClInclude Include="MultilevelPointer.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="targetver.h" />
@@ -153,6 +154,7 @@
     <ClCompile Include="Console.cpp" />
     <ClCompile Include="Memory.cpp" />
     <ClCompile Include="metaData.cpp" />
+    <ClCompile Include="MultilevelPointer.cpp" />
     <ClCompile Include="State.cpp" />
   </ItemGroup>
   <ItemGroup>

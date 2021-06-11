@@ -43,8 +43,6 @@ public:
 	virtual void update(WPARAM vkCode);
 };
 
-typedef std::map<int, std::shared_ptr<State>> MAP_STATE;
-
 class Context
 {
 public:
@@ -62,5 +60,5 @@ public:
 
 protected:
 	std::shared_ptr<State> m_currentState;
-	MAP_STATE m_states;
+	std::map<int, std::shared_ptr<State>> m_states;
 };

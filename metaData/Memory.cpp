@@ -9,10 +9,11 @@
 
 #include "State.h"
 
+extern Console g_console;
 extern Context g_state;
 
 Memory::Memory(const std::wstring& targetProcessName)
-    : m_processWindowHandle(NULL), m_targetProcessName(targetProcessName), m_processPID(0),
+    : m_processHandle(NULL), m_targetProcessName(targetProcessName), m_processPID(0),
     m_imageName(L""), m_baseAddress(0)
 {
     this->attachProcess();
@@ -20,9 +21,9 @@ Memory::Memory(const std::wstring& targetProcessName)
 
 Memory::~Memory()
 {
-    if (m_processWindowHandle)
+    if (m_processHandle)
     {
-        CloseHandle(m_processWindowHandle);
+        CloseHandle(m_processHandle);
     }
 }
 
@@ -49,7 +50,7 @@ void Memory::checkHash()
 
     LPWSTR imageName = new WCHAR[2048];
     DWORD imageNameSize = 2048;
-    QueryFullProcessImageNameW(m_processWindowHandle, 0, imageName, &imageNameSize);
+    QueryFullProcessImageNameW(m_processHandle, 0, imageName, &imageNameSize);
 
     std::filesystem::path p{imageName};
     uintmax_t size = std::filesystem::file_size(p);
@@ -76,7 +77,7 @@ void Memory::getBaseAddress()
     HMODULE lphModule[1024];
     DWORD lpcbNeeded = 0;
 
-    if (!EnumProcessModulesEx(m_processWindowHandle, lphModule, sizeof(lphModule), &lpcbNeeded, LIST_MODULES_ALL))
+    if (!EnumProcessModulesEx(m_processHandle, lphModule, sizeof(lphModule), &lpcbNeeded, LIST_MODULES_ALL))
     {
         throw std::string("List modules ERROR");
     }
@@ -87,11 +88,11 @@ void Memory::getBaseAddress()
     std::wstring moduleFileNameStr;
     for (int i = 0; i < moduleCount; i++)
     {
-        moduleFileNameSize = GetModuleFileNameEx(m_processWindowHandle, lphModule[i], moduleFileName, 1024);
+        moduleFileNameSize = GetModuleFileNameEx(m_processHandle, lphModule[i], moduleFileName, 1024);
         moduleFileNameStr = std::wstring(moduleFileName);
         if (m_imageName.compare(moduleFileNameStr) == 0)
         {
-            m_baseAddress = (uint64_t) lphModule[i];
+            m_baseAddress = (uint64_t)lphModule[i];
             break;
         }
     }
@@ -125,7 +126,7 @@ void Memory::getProcessByName()
         {
             if (targetExecName.compare(entry.szExeFile) == 0)
             {
-                m_processWindowHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
+                m_processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
                 m_processPID = entry.th32ProcessID;
                 break;
             }
@@ -134,20 +135,48 @@ void Memory::getProcessByName()
 
     CloseHandle(snapshot);
 
-    if (!m_processWindowHandle)
+    if (!m_processHandle)
     {
         throw std::string("Error attaching to process");
     }
 }
 
-NinjaMemory::NinjaMemory(const std::wstring& targetProcessName)
-    : Memory(targetProcessName)
-{
-}
-
 std::unique_ptr<Memory> NinjaMemory::Create(const std::wstring& targetProcessName)
 {
     return std::make_unique<NinjaMemory>(targetProcessName);
+}
+
+NinjaMemory::NinjaMemory(const std::wstring& targetProcessName)
+    : Memory(targetProcessName)
+{
+    m_mpInstantCast = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x2A47E8);
+}
+
+void NinjaMemory::instantCast(bool flag)
+{
+    std::vector<uint8_t> buffer;
+    if (flag)
+    {
+        buffer = { 0xC7, 0x43, 0x08, 0x00, 0x00, 0x00, 0x00, 0xEB, 0x29, 0x90, 0x90, 0x90, 0x90, 0x90 };
+    }
+    else
+    {
+        buffer = { 0xF3, 0x0F, 0x5C, 0xC7, 0x0F, 0x2F, 0xF0, 0xF3, 0x0F, 0x11, 0x43, 0x08, 0x72, 0x24 };
+    }
+    g_console.printResult(m_mpInstantCast->setBytes(buffer), flag, __func__);
+}
+
+void NinjaMemory::update(WPARAM vkCode)
+{
+    switch (vkCode)
+    {
+    case 'X':
+        this->instantCast(true);
+        break;
+    case 'C':
+        this->instantCast(false);
+        break;
+    }
 }
 
 MemoryFactory::MemoryFactory()
@@ -161,17 +190,17 @@ MemoryFactory& MemoryFactory::Get()
     return instance;
 }
 
-void MemoryFactory::registerConstructor(const std::wstring& targetProcessName, CreateMemoryFn pfnCreate)
-{
-   m_FactoryMap[targetProcessName] = pfnCreate;
-}
-
 std::unique_ptr<Memory> MemoryFactory::createMemory(const std::wstring& targetProcessName)
 {
-    FactoryMap::iterator it = m_FactoryMap.find(targetProcessName);
+    auto it = m_FactoryMap.find(targetProcessName);
     if (it != m_FactoryMap.end())
     {
         return it->second(targetProcessName);
     }
     return nullptr;
+}
+
+void MemoryFactory::registerConstructor(const std::wstring& targetProcessName, CreateMemoryFn pfnCreate)
+{
+   m_FactoryMap[targetProcessName] = pfnCreate;
 }

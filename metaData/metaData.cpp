@@ -15,17 +15,14 @@
 
 #define MAX_LOADSTRING  100
 
-typedef std::map<std::string, int> MAP_TARGET;
-
 // Global Variables
-HINSTANCE hInst;                            // Current instance
-HWND hWnd;                                  // Main window handler
-WCHAR szTitle[MAX_LOADSTRING];              // The title bar text
-WCHAR szWindowClass[MAX_LOADSTRING];        // The main window class name
+HINSTANCE   hInst;                          // Current instance
+HWND        hWnd;                           // Main window handler
+WCHAR       szTitle[MAX_LOADSTRING];        // The title bar text
+WCHAR       szWindowClass[MAX_LOADSTRING];  // The main window class name
 
-Console g_console;                          // Console text
-Context g_state;		                    // Program state
-MAP_TARGET g_targets;                       // Available targets
+Console                 g_console;          // Console text
+Context                 g_state;            // Program state
 std::unique_ptr<Memory> g_memory;           // Game target memory access
 
 // Forward declarations of functions included in this code module
@@ -76,7 +73,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     UnhookWindowsHookEx(hookId);
 
-    return (int) msg.wParam;
+    return (int)msg.wParam;
 }
 
 ATOM MyRegisterClass(HINSTANCE hInstance)
@@ -92,7 +89,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.hInstance      = hInstance;
     wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_METADATA));
     wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH) (COLOR_WINDOW + 1);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW + 1);
     wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_METADATA);
     wcex.lpszClassName  = szWindowClass;
     wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
@@ -167,8 +164,6 @@ LRESULT CALLBACK HookCallback(int code, WPARAM wParam, LPARAM lParam)
 
 void InitConfiguration(LPWSTR lpCmdLine)
 {
-    g_targets.insert(MAP_TARGET::value_type("ninja", 1));
-
     LPWSTR* szArglist;
     int nArgs;
     szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
@@ -184,8 +179,15 @@ void InitConfiguration(LPWSTR lpCmdLine)
     }
     else
     {
-        g_state.setState(Context::STATES::WORKING);
         g_memory = MemoryFactory::Get().createMemory(szArglist[1]);
+        if (!g_memory)
+        {
+            Usage();
+        }
+        else
+        {
+            g_state.setState(Context::STATES::WORKING);
+        }
     }
 
     LocalFree(szArglist);

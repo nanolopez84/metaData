@@ -24,7 +24,7 @@ void Console::append(const std::string& s)
 void Console::paint(HDC hdc, PAINTSTRUCT ps)
 {
     SetDCBrushColor(hdc, COLOR_CONSOLE_BACKGROUND);
-    FillRect(hdc, &ps.rcPaint, (HBRUSH) GetStockObject(DC_BRUSH));
+    FillRect(hdc, &ps.rcPaint, (HBRUSH)GetStockObject(DC_BRUSH));
 
     SetBkColor(hdc, COLOR_TEXT_BACKGROUND);
     SetTextColor(hdc, COLOR_TEXT_FOREGROUND);
@@ -38,4 +38,27 @@ void Console::paint(HDC hdc, PAINTSTRUCT ps)
         LPCWSTR sw = stemp.c_str();
         TextOut(hdc, 0, CONSOLE_LINE_SPACE * i++, sw, lstrlen(sw));
     }
+}
+
+void Console::printResult(bool result, bool flag, const char* methodName)
+{
+    std::stringstream ss;
+    ss << methodName << " ";
+    if (result)
+    {
+        if (flag)
+        {
+            ss << "ON";
+        }
+        else
+        {
+            ss << "OFF";
+        }
+    }
+    else
+    {
+        ss << "ERROR";
+    }
+
+    this->append(ss.str());
 }
