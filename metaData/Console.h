@@ -22,5 +22,5 @@ public:
 	Console();
 	void	append(const std::string& s);
 	void	paint(HDC hdc, PAINTSTRUCT ps);
-	void	printResult(bool result, bool flag, const char* methodName);
+	void	printResult(bool result, const char* methodName);
 };

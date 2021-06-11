@@ -40,25 +40,18 @@ void Console::paint(HDC hdc, PAINTSTRUCT ps)
     }
 }
 
-void Console::printResult(bool result, bool flag, const char* methodName)
+void Console::printResult(bool result, const char* methodName)
 {
     std::stringstream ss;
-    ss << methodName << " ";
     if (result)
     {
-        if (flag)
-        {
-            ss << "ON";
-        }
-        else
-        {
-            ss << "OFF";
-        }
+        ss << "OK   : ";
     }
     else
     {
-        ss << "ERROR";
+        ss << "ERROR: ";
     }
+    ss << methodName;
 
     this->append(ss.str());
 }

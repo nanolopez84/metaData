@@ -5,7 +5,8 @@
 #include "Console.h"
 #include "State.h"
 
-#define PROGRAM_NAME "metaData"
+#define KEY_MAP_FILE_NAME	"keyMapping.cfg"
+#define PROGRAM_NAME		"metaData"
 
 extern Console g_console;   // Console text
 extern Context g_state;		// Program state

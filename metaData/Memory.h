@@ -4,14 +4,20 @@
 
 #include <memory>
 #include <map>
+#include <functional>
 
 #include "MultilevelPointer.h"
+
+typedef std::map<WPARAM, std::string>                       MAP_KEY;
+typedef std::map<std::string, std::function<void(void)>>    MAP_METHOD;
 
 class Memory
 {
 protected:
     uint64_t        m_baseAddress;
     std::wstring    m_imageName;
+    MAP_KEY         m_mapKey;
+    MAP_METHOD      m_mapMethod;
     HANDLE          m_processHandle;
     DWORD           m_processPID;
     std::wstring    m_targetProcessName;
@@ -20,11 +26,12 @@ protected:
     void checkHash();
     void getBaseAddress();
     void getProcessByName();
+    void loadKeyMapping();
 
 public:
     Memory(const std::wstring& targetProcessName);
     virtual ~Memory();
-    virtual void update(WPARAM vkCode) = 0;
+    void update(WPARAM vkCode);
 };
 
 typedef std::unique_ptr<Memory> (__stdcall *CreateMemoryFn)(const std::wstring& targetProcessName);
@@ -39,8 +46,8 @@ public:
 
     NinjaMemory(const std::wstring& targetProcessName);
     virtual ~NinjaMemory() {}
-    void            instantCast(bool flag);
-    virtual void    update(WPARAM vkCode);
+    void            instantCastOff();
+    void            instantCastOn();
 };
 
 class MemoryFactory

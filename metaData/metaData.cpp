@@ -10,10 +10,12 @@
 #include <vector>
 #include <memory>
 #include <list>
+#include <fstream>
+#include <filesystem>
 
 #include "Memory.h"
 
-#define MAX_LOADSTRING  100
+#define MAX_LOADSTRING 100
 
 // Global Variables
 HINSTANCE   hInst;                          // Current instance
@@ -26,6 +28,7 @@ Context                 g_state;            // Program state
 std::unique_ptr<Memory> g_memory;           // Game target memory access
 
 // Forward declarations of functions included in this code module
+void                CreateKeyMappingFile();
 LRESULT CALLBACK    HookCallback(int code, WPARAM wParam, LPARAM lParam);
 void                InitConfiguration(LPWSTR lpCmdLine);
 HWND                InitInstance(HINSTANCE, int);
@@ -177,20 +180,61 @@ void InitConfiguration(LPWSTR lpCmdLine)
     {
         Usage();
     }
+    else if (std::wstring(L"default").compare(szArglist[1]) == 0)
+    {
+        g_state.setState(Context::STATES::ERR);
+        CreateKeyMappingFile();
+    }
     else
     {
         g_memory = MemoryFactory::Get().createMemory(szArglist[1]);
-        if (!g_memory)
-        {
-            Usage();
-        }
-        else
+        if (g_memory)
         {
             g_state.setState(Context::STATES::WORKING);
         }
     }
 
     LocalFree(szArglist);
+}
+
+void CreateKeyMappingFile()
+{
+    int width = 60;
+
+    std::ofstream fout(KEY_MAP_FILE_NAME);
+
+    if (!fout.bad())
+    {
+        fout << std::left << std::setw(width) << "NINJA_INSTANT_CAST_OFF" << 'X' << std::endl;
+        fout << std::left << std::setw(width) << "NINJA_INSTANT_CAST_ON" << 'C' << std::endl;
+        fout << std::left << std::setw(width) << "NINJA_INFINITE_INVENTORY_OFF" << 'Z' << std::endl;
+        fout << std::left << std::setw(width) << "NINJA_INFINITE_INVENTORY_ON" << 'V' << std::endl;
+    }
+
+    g_console.append("Press ESC to exit");
+    g_console.append("");
+
+    if (!fout.bad())
+    {
+        g_console.append("Key mapping file created");
+    }
+    else
+    {
+        std::stringstream ss;
+        ss << "Can not create key mapping file: " << KEY_MAP_FILE_NAME;
+        g_console.append(ss.str());
+    }
+}
+
+void Exit(int nExitCode)
+{
+    PostQuitMessage(nExitCode);
+}
+
+void InvalidateScreen()
+{
+    InvalidateRect(hWnd, NULL, TRUE);
+    UpdateWindow(hWnd);
 }
 
 void Usage()
@@ -224,21 +268,18 @@ void Usage()
     lines.push_back("re2                  Resident Evil 2 (Remake)");
 
     lines.push_back("");
+    lines.push_back("Reset keyboard mapping:");
+
+    ss.str("");
+    ss.clear();
+    ss << PROGRAM_NAME << " default";
+    lines.push_back(ss.str());
+
+    lines.push_back("");
     lines.push_back("Press ESC to exit");
 
     for (auto it = lines.rbegin(); it != lines.rend(); ++it)
     {
         g_console.append(*it);
     }
-}
-
-void InvalidateScreen()
-{
-    InvalidateRect(hWnd, NULL, TRUE);
-    UpdateWindow(hWnd);
-}
-
-void Exit(int nExitCode)
-{
-    PostQuitMessage(nExitCode);
 }

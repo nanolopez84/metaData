@@ -8,6 +8,7 @@
 #include <filesystem>
 
 #include "State.h"
+#include "metaData.h"
 
 extern Console g_console;
 extern Context g_state;
@@ -17,6 +18,7 @@ Memory::Memory(const std::wstring& targetProcessName)
     m_imageName(L""), m_baseAddress(0)
 {
     this->attachProcess();
+    this->loadKeyMapping();
 }
 
 Memory::~Memory()
@@ -29,17 +31,9 @@ Memory::~Memory()
 
 void Memory::attachProcess()
 {
-    try
-    {
-        this->getProcessByName();
-        this->checkHash();
-        this->getBaseAddress();
-    }
-    catch (std::string& msg)
-    {
-        g_state.setState(Context::STATES::ERR);
-        g_state.setErrorMessage(msg);
-    }
+    this->getProcessByName();
+    this->checkHash();
+    this->getBaseAddress();
 }
 
 void Memory::checkHash()
@@ -141,6 +135,59 @@ void Memory::getProcessByName()
     }
 }
 
+void Memory::loadKeyMapping()
+{
+    std::ifstream fin(KEY_MAP_FILE_NAME);
+    if (fin.bad())
+    {
+        g_state.setState(Context::STATES::ERR);
+
+        std::stringstream ss;
+        ss << "Can not open key mapping file: " << KEY_MAP_FILE_NAME;
+        g_state.setErrorMessage(ss.str());
+        return;
+    }
+
+    std::map<std::wstring, std::string> mapPrefix{
+        {L"ninja", "NINJA"}
+    };
+
+    std::string prefix = mapPrefix[m_targetProcessName];
+    std::string line;
+    std::string action;
+    std::string vkCode;
+    while (std::getline(fin, line))
+    {
+        std::stringstream ss(line);
+        if (ss >> action >> vkCode)
+        {
+            if (action.find(prefix) != std::string::npos)
+            {
+                m_mapKey[toupper(vkCode[0])] = action;
+            }
+        }
+    }
+}
+
+void Memory::update(WPARAM vkCode)
+{
+    auto itKey = m_mapKey.find(vkCode);
+    if (itKey != m_mapKey.end())
+    {
+        auto itMethod = m_mapMethod.find(itKey->second);
+        if (itMethod != m_mapMethod.end())
+        {
+            itMethod->second();
+        }
+        else
+        {
+            std::stringstream ss;
+            ss << "ERROR: " << itKey->second << " not found";
+            g_console.append(ss.str());
+        }
+    }
+}
+
 std::unique_ptr<Memory> NinjaMemory::Create(const std::wstring& targetProcessName)
 {
     return std::make_unique<NinjaMemory>(targetProcessName);
@@ -150,33 +197,21 @@ NinjaMemory::NinjaMemory(const std::wstring& targetProcessName)
     : Memory(targetProcessName)
 {
     m_mpInstantCast = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x2A47E8);
+
+    m_mapMethod["NINJA_INSTANT_CAST_OFF"]   = std::bind(&NinjaMemory::instantCastOff, this);
+    m_mapMethod["NINJA_INSTANT_CAST_ON"]    = std::bind(&NinjaMemory::instantCastOn, this);
 }
 
-void NinjaMemory::instantCast(bool flag)
+void NinjaMemory::instantCastOff()
 {
-    std::vector<uint8_t> buffer;
-    if (flag)
-    {
-        buffer = { 0xC7, 0x43, 0x08, 0x00, 0x00, 0x00, 0x00, 0xEB, 0x29, 0x90, 0x90, 0x90, 0x90, 0x90 };
-    }
-    else
-    {
-        buffer = { 0xF3, 0x0F, 0x5C, 0xC7, 0x0F, 0x2F, 0xF0, 0xF3, 0x0F, 0x11, 0x43, 0x08, 0x72, 0x24 };
-    }
-    g_console.printResult(m_mpInstantCast->setBytes(buffer), flag, __func__);
+    std::vector<uint8_t> buffer { 0xF3, 0x0F, 0x5C, 0xC7, 0x0F, 0x2F, 0xF0, 0xF3, 0x0F, 0x11, 0x43, 0x08, 0x72, 0x24 };
+    g_console.printResult(m_mpInstantCast->setBytes(buffer), "NINJA_INSTANT_CAST_OFF");
 }
 
-void NinjaMemory::update(WPARAM vkCode)
+void NinjaMemory::instantCastOn()
 {
-    switch (vkCode)
-    {
-    case 'X':
-        this->instantCast(true);
-        break;
-    case 'C':
-        this->instantCast(false);
-        break;
-    }
+    std::vector<uint8_t> buffer { 0xC7, 0x43, 0x08, 0x00, 0x00, 0x00, 0x00, 0xEB, 0x29, 0x90, 0x90, 0x90, 0x90, 0x90 };
+    g_console.printResult(m_mpInstantCast->setBytes(buffer), "NINJA_INSTANT_CAST_ON");
 }
 
 MemoryFactory::MemoryFactory()
@@ -195,7 +230,20 @@ std::unique_ptr<Memory> MemoryFactory::createMemory(const std::wstring& targetPr
     auto it = m_FactoryMap.find(targetProcessName);
     if (it != m_FactoryMap.end())
     {
-        return it->second(targetProcessName);
+        try
+        {
+            return it->second(targetProcessName);
+        }
+        catch (std::string& msg)
+        {
+            g_state.setState(Context::STATES::ERR);
+            g_state.setErrorMessage(msg);
+        }
+    }
+    else
+    {
+        g_state.setState(Context::STATES::ERR);
+        g_state.setErrorMessage("Option not supported");
     }
     return nullptr;
 }
