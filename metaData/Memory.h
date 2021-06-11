@@ -49,6 +49,7 @@ typedef std::unique_ptr<Memory> (__stdcall *CreateMemoryFn)(const std::wstring& 
 class NinjaMemory : public Memory
 {
 protected:
+    std::unique_ptr<MultilevelPointer> m_mpInfinityItems;
     std::unique_ptr<MultilevelPointer> m_mpInstantCast;
 
 public:
@@ -56,8 +57,10 @@ public:
 
     NinjaMemory(const std::wstring& targetProcessName);
     virtual ~NinjaMemory() {}
-    void            instantCastOff();
-    void            instantCastOn();
+    void infinityItemsOff();
+    void infinityItemsOn();
+    void instantCastOff();
+    void instantCastOn();
 };
 
 class MemoryFactory

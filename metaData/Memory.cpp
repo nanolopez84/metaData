@@ -194,10 +194,25 @@ std::unique_ptr<Memory> NinjaMemory::Create(const std::wstring& targetProcessNam
 NinjaMemory::NinjaMemory(const std::wstring& targetProcessName)
     : Memory(targetProcessName)
 {
-    m_mpInstantCast = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x2A47E8);
+    m_mpInfinityItems   = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x2A297B);
+    m_mpInstantCast     = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x2A47E8);
 
+    m_mapMethod["NINJA_INFINITE_ITEMS_OFF"] = std::bind(&NinjaMemory::infinityItemsOff, this);
+    m_mapMethod["NINJA_INFINITE_ITEMS_ON"]  = std::bind(&NinjaMemory::infinityItemsOn, this);
     m_mapMethod["NINJA_INSTANT_CAST_OFF"]   = std::bind(&NinjaMemory::instantCastOff, this);
     m_mapMethod["NINJA_INSTANT_CAST_ON"]    = std::bind(&NinjaMemory::instantCastOn, this);
+}
+
+void NinjaMemory::infinityItemsOff()
+{
+    std::vector<uint8_t> buffer{ 0xFF, 0x4B, 0x04 };
+    g_console.printResult(m_mpInfinityItems->setBytes(buffer), "NINJA_INFINITE_ITEMS_OFF");
+}
+
+void NinjaMemory::infinityItemsOn()
+{
+    std::vector<uint8_t> buffer{ 0x90, 0x90, 0x90 };
+    g_console.printResult(m_mpInfinityItems->setBytes(buffer), "NINJA_INFINITE_ITEMS_ON");
 }
 
 void NinjaMemory::instantCastOff()
