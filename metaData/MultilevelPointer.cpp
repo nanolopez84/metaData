@@ -10,6 +10,13 @@ MultilevelPointer::MultilevelPointer(HANDLE processHandler, uint64_t baseAddress
     this->resizeBuffer(sizeof(uint64_t));
 }
 
+void MultilevelPointer::getBytes(std::vector<uint8_t>& buffer, size_t bytesToRead)
+{
+    this->update();
+    this->readProcessMemory(bytesToRead, m_effectiveAddress);
+    std::copy_n(m_buffer.begin(), bytesToRead, buffer.begin());
+}
+
 uint64_t MultilevelPointer::getLong()
 {
     this->resizeBuffer(sizeof(uint64_t));

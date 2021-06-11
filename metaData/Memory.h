@@ -10,7 +10,7 @@
 
 typedef std::map<WPARAM, std::string>                       MAP_KEY;
 typedef std::map<std::string, std::function<void(void)>>    MAP_METHOD;
-typedef std::map<std::wstring, std::vector<std::string>>     MEM_CONFIG;
+typedef std::map<std::wstring, std::vector<std::string>>    MEM_CONFIG;
 
 class Memory
 {
@@ -61,6 +61,29 @@ public:
     void infinityItemsOn();
     void instantCastOff();
     void instantCastOn();
+};
+
+class RE2Memory : public Memory
+{
+protected:
+    std::unique_ptr<MultilevelPointer> m_mpDamage;
+    std::unique_ptr<MultilevelPointer> m_mpFullDamage;
+    std::unique_ptr<MultilevelPointer> m_mpHealth;
+    std::unique_ptr<MultilevelPointer> m_mpKillAll;
+    std::unique_ptr<MultilevelPointer> m_mpShots;
+
+public:
+    static std::unique_ptr<Memory> __stdcall Create(const std::wstring& targetProcessName);
+
+    RE2Memory(const std::wstring& targetProcessName);
+    virtual ~RE2Memory() {}
+    void fullDamage();
+    void killAll();
+    void noDamage();
+    void normalDamage();
+    void restoreHealth();
+    void shotsInfinite();
+    void shotsNormal();
 };
 
 class MemoryFactory

@@ -69,6 +69,7 @@ void Memory::createConfiguration()
 {
     // Hash - Executable name - Key mapping config file action prefix
     m_configuration[L"ninja"] = { "10504905621138366064", "Ninja.exe", "NINJA" };
+    m_configuration[L"re2"] =   { "4611656554091893195", "re2.exe", "RE2" };
 }
 
 void Memory::getBaseAddress()
@@ -227,9 +228,73 @@ void NinjaMemory::instantCastOn()
     g_console.printResult(m_mpInstantCast->setBytes(buffer), "NINJA_INSTANT_CAST_ON");
 }
 
+std::unique_ptr<Memory> RE2Memory::Create(const std::wstring& targetProcessName)
+{
+    return std::make_unique<RE2Memory>(targetProcessName);
+}
+
+RE2Memory::RE2Memory(const std::wstring& targetProcessName)
+    : Memory(targetProcessName)
+{
+    m_mpDamage          = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0xF99DF8);
+    m_mpFullDamage      = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0xF99DE4);
+    m_mpHealth          = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x0);
+    m_mpKillAll         = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x0);
+    m_mpShots           = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x51A39A);
+
+    m_mapMethod["RE2_FULL_DAMAGE"]      = std::bind(&RE2Memory::fullDamage, this);
+    m_mapMethod["RE2_KILL_ALL"]         = std::bind(&RE2Memory::killAll, this);
+    m_mapMethod["RE2_NO_DAMAGE"]        = std::bind(&RE2Memory::noDamage, this);
+    m_mapMethod["RE2_NORMAL_DAMAGE"]    = std::bind(&RE2Memory::normalDamage, this);
+    m_mapMethod["RE2_RESTORE_HEALTH"]   = std::bind(&RE2Memory::restoreHealth, this);
+    m_mapMethod["RE2_SHOTS_INFINITE"]   = std::bind(&RE2Memory::shotsInfinite, this);
+    m_mapMethod["RE2_SHOTS_NORMAL"]     = std::bind(&RE2Memory::shotsNormal, this);
+}
+
+void RE2Memory::fullDamage()
+{
+    std::vector<uint8_t> buffer{ 0xB8, 0x00, 0x00, 0x00, 0x00, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
+        0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x41, 0x89, 0x41, 0x58 };
+    g_console.printResult(m_mpFullDamage->setBytes(buffer), "RE2_FULL_DAMAGE");
+}
+
+void RE2Memory::killAll()
+{
+}
+
+void RE2Memory::noDamage()
+{
+    std::vector<uint8_t> buffer{ 0x90, 0x90, 0x90, 0x90 };
+    g_console.printResult(m_mpDamage->setBytes(buffer), "RE2_NO_DAMAGE");
+}
+
+void RE2Memory::normalDamage()
+{
+    std::vector<uint8_t> buffer{ 0x8B, 0x4A, 0x58, 0x41, 0x8B, 0xC0, 0x99, 0x33, 0xC2, 0x2B, 0xC2, 0x2B,
+        0xC8, 0x33, 0xC0, 0x85, 0xC9, 0x0F, 0x4F, 0xC1, 0x41, 0x89, 0x41, 0x58 };
+    g_console.printResult(m_mpFullDamage->setBytes(buffer), "RE2_NORMAL_DAMAGE");
+}
+
+void RE2Memory::restoreHealth()
+{
+}
+
+void RE2Memory::shotsInfinite()
+{
+    std::vector<uint8_t> buffer{ 0x90, 0x90, 0x90 };
+    g_console.printResult(m_mpShots->setBytes(buffer), "RE2_SHOTS_INFINITE");
+}
+
+void RE2Memory::shotsNormal()
+{
+    std::vector<uint8_t> buffer{ 0x89, 0x58, 0x20 };
+    g_console.printResult(m_mpShots->setBytes(buffer), "RE2_SHOTS_NORMAL");
+}
+
 MemoryFactory::MemoryFactory()
 {
-    registerConstructor(L"ninja", &NinjaMemory::Create);
+    registerConstructor(L"ninja",   &NinjaMemory::Create);
+    registerConstructor(L"re2",     &RE2Memory::Create);
 }
 
 MemoryFactory& MemoryFactory::Get()

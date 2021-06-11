@@ -209,6 +209,14 @@ void CreateKeyMappingFile()
         fout << std::left << std::setw(width) << "NINJA_INSTANT_CAST_ON"        << 'C' << std::endl;
         fout << std::left << std::setw(width) << "NINJA_INFINITE_ITEMS_OFF"     << 'Z' << std::endl;
         fout << std::left << std::setw(width) << "NINJA_INFINITE_ITEMS_ON"      << 'V' << std::endl;
+
+        fout << std::left << std::setw(width) << "RE2_FULL_DAMAGE"      << 'X' << std::endl;
+        fout << std::left << std::setw(width) << "RE2_KILL_ALL"         << 'C' << std::endl;
+        fout << std::left << std::setw(width) << "RE2_NO_DAMAGE"        << 'B' << std::endl;
+        fout << std::left << std::setw(width) << "RE2_NORMAL_DAMAGE"    << 'Z' << std::endl;
+        fout << std::left << std::setw(width) << "RE2_RESTORE_HEALTH"   << 'V' << std::endl;
+        fout << std::left << std::setw(width) << "RE2_SHOTS_INFINITE"   << 'J' << std::endl;
+        fout << std::left << std::setw(width) << "RE2_SHOTS_NORMAL"     << 'K' << std::endl;
     }
 
     g_console.append("Press ESC to exit");

@@ -26,6 +26,7 @@ protected:
 public:
     MultilevelPointer(HANDLE processHandler, uint64_t baseAddress,
         std::unique_ptr<std::vector<uint8_t>> offsets = nullptr);
+    void        getBytes(std::vector<uint8_t>& buffer, size_t count);
     uint64_t    getLong();
     bool        readProcessMemory(SIZE_T bytesToRead = sizeof(uint64_t), uint64_t address = 0);
     bool        setBytes(std::vector<uint8_t>& buffer);
