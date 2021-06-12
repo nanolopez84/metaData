@@ -239,8 +239,13 @@ RE2Memory::RE2Memory(const std::wstring& targetProcessName)
     m_mpDamage          = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0xF99DF8);
     m_mpFullDamage      = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0xF99DE4);
     m_mpHealth          = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x70A0948, std::vector<uint64_t>{ 0x50, 0x20 });
-    m_mpKillAll         = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x0);
     m_mpShots           = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x51A39A);
+
+    m_mpEnemies.resize(32);
+    for (uint64_t i = 0; i < m_mpEnemies.size(); ++i)
+    {
+        m_mpEnemies[i] = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x7095238, std::vector<uint64_t>{ 0x80 + (i * 0x08), 0x88, 0x18, 0x1A0 });
+    }
 
     m_mapMethod["RE2_FULL_DAMAGE"]      = std::bind(&RE2Memory::fullDamage, this);
     m_mapMethod["RE2_KILL_ALL"]         = std::bind(&RE2Memory::killAll, this);
@@ -260,6 +265,13 @@ void RE2Memory::fullDamage()
 
 void RE2Memory::killAll()
 {
+    std::vector<uint8_t> buffer{ 0x00, 0x00, 0x00, 0x00 };
+    for (auto& pointer : m_mpEnemies)
+    {
+        pointer->setBytes(buffer, 0x50);
+        pointer->setBytes(buffer, 0x58);
+    }
+    g_console.printResult(true, "RE2_KILL_ALL");
 }
 
 void RE2Memory::noDamage()

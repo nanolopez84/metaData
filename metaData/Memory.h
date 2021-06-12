@@ -66,11 +66,11 @@ public:
 class RE2Memory : public Memory
 {
 protected:
-    std::unique_ptr<MultilevelPointer> m_mpDamage;
-    std::unique_ptr<MultilevelPointer> m_mpFullDamage;
-    std::unique_ptr<MultilevelPointer> m_mpHealth;
-    std::unique_ptr<MultilevelPointer> m_mpKillAll;
-    std::unique_ptr<MultilevelPointer> m_mpShots;
+    std::unique_ptr<MultilevelPointer>              m_mpDamage;
+    std::unique_ptr<MultilevelPointer>              m_mpFullDamage;
+    std::unique_ptr<MultilevelPointer>              m_mpHealth;
+    std::vector<std::unique_ptr<MultilevelPointer>> m_mpEnemies;
+    std::unique_ptr<MultilevelPointer>              m_mpShots;
 
 public:
     static std::unique_ptr<Memory> __stdcall Create(const std::wstring& targetProcessName);

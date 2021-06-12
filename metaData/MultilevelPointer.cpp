@@ -42,6 +42,10 @@ void MultilevelPointer::resizeBuffer(SIZE_T newSize)
 bool MultilevelPointer::setBytes(std::vector<uint8_t>& buffer, uint64_t offset)
 {
     this->update();
+    if (!m_effectiveAddress)
+    {
+        return false;
+    }
     return this->writeProcessMemory(buffer, m_effectiveAddress + offset);
 }
 
