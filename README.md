@@ -20,7 +20,7 @@ The list so far:
 ### Procedure
 1. Run the game from Steam
 2. Run **metaData** from the command line to target a specific game
-2.1 If you run **metaData** without parameters, it will show you a usage message
+	1. If you run **metaData** without parameters, it will show you a usage message
 
 Example
 ```
@@ -28,8 +28,8 @@ Example
 ```
 
 3. Use the keys mapped to different hacks while you play the game
-3.1 The keys mapping are configured in the file named *keyMapping.cfg*
-3.2 You may change the mapping as you see fit, and if you screw the configuration file, you will be able to create the default configuration file again with this command:
+	1. The keys mapping are configured in the file named *keyMapping.cfg*
+	2. You may change the mapping as you see fit, and if you screw the configuration file, you will be able to create the default configuration file again with this command:
 
 ```
 > metaData.exe default
@@ -47,6 +47,7 @@ NINJA_INFINITE_ITEMS_ON                                     V
 While your playing the game, if you press *C* key, the **metaData** console will give you a message showing that casting a trick won't have any cooldown (you may use 2 screens, play the game in window mode, or just ignore the **metaData** console and keep playing the game in fullscreen mode). If you want to disable the cooldown hack, you may press *X* while in game and the delay between tricks executions will return to normal.
 Due to the fact that this software hooks low level API keyboard calls, you don't have to switch focus to enable/disable hacks. This allows infinite possibilites to explore!
 Be aware that in Resident Evil 2 the *Full Damage* hack will also kill you instantly if you get a single point of damage!
+Read the *keyMapping.cfg* file to learn all the hacks implemented.
 
 ## Final note
 Nothing in this software was meant to damage anything, nor give anyone wrong ideas.
