@@ -205,6 +205,9 @@ void CreateKeyMappingFile()
 
     if (!fout.bad())
     {
+        fout << std::left << std::setw(width) << "DISH2_INFINITE_MP_OFF"    << 'C' << std::endl;
+        fout << std::left << std::setw(width) << "DISH2_INFINITE_MP_ON"     << 'X' << std::endl;
+
         fout << std::left << std::setw(width) << "NINJA_INSTANT_CAST_OFF"       << 'X' << std::endl;
         fout << std::left << std::setw(width) << "NINJA_INSTANT_CAST_ON"        << 'C' << std::endl;
         fout << std::left << std::setw(width) << "NINJA_INFINITE_ITEMS_OFF"     << 'Z' << std::endl;

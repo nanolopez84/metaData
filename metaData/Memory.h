@@ -19,7 +19,8 @@ protected:
     {
         HASH = 0,
         EXEC_NAME,
-        PREFIX
+        PREFIX,
+        SPLASH
     };
 
     uint64_t            m_baseAddress;
@@ -46,6 +47,20 @@ public:
 
 typedef std::unique_ptr<Memory> (__stdcall *CreateMemoryFn)(const std::wstring& targetProcessName);
 
+class Dishonored2 : public Memory
+{
+protected:
+    std::unique_ptr<MultilevelPointer> m_mpMP;
+
+public:
+    static std::unique_ptr<Memory> __stdcall Create(const std::wstring& targetProcessName);
+
+    Dishonored2(const std::wstring& targetProcessName);
+    virtual ~Dishonored2() {}
+    void infiniteMPOff();
+    void infiniteMPOn();
+};
+
 class NinjaMemory : public Memory
 {
 protected:
@@ -57,8 +72,8 @@ public:
 
     NinjaMemory(const std::wstring& targetProcessName);
     virtual ~NinjaMemory() {}
-    void infinityItemsOff();
-    void infinityItemsOn();
+    void infiniteItemsOff();
+    void infiniteItemsOn();
     void instantCastOff();
     void instantCastOn();
 };

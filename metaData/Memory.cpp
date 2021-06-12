@@ -20,6 +20,8 @@ Memory::Memory(const std::wstring& targetProcessName)
     this->createConfiguration();
     this->attachProcess();
     this->loadKeyMapping();
+
+    g_console.append(m_configuration[m_targetProcessName][Memory::CONIFG::SPLASH]);
     m_configuration.clear();
 }
 
@@ -68,8 +70,9 @@ void Memory::checkHash()
 void Memory::createConfiguration()
 {
     // Hash - Executable name - Key mapping config file action prefix
-    m_configuration[L"ninja"] = { "10504905621138366064", "Ninja.exe", "NINJA" };
-    m_configuration[L"re2"] =   { "4611656554091893195", "re2.exe", "RE2" };
+    m_configuration[L"dish2"] = { "7515693054130822148", "Dishonored2.exe", "DISH2", "Dishonored 2. Steam Build ID: 3364416" };
+    m_configuration[L"ninja"] = { "10504905621138366064", "Ninja.exe", "NINJA", "Mark of the Ninja. Steam Build ID: 5908561" };
+    m_configuration[L"re2"] =   { "4611656554091893195", "re2.exe", "RE2", "Resident Evil 2 Remake. Steam Build ID: 6150023" };
 }
 
 void Memory::getBaseAddress()
@@ -134,7 +137,9 @@ void Memory::getProcessByName()
 
     if (!m_processHandle)
     {
-        throw std::string("Error attaching to process");
+        std::stringstream ss;
+        ss << "Error attaching to process: " << m_configuration[m_targetProcessName][Memory::CONIFG::SPLASH];
+        throw std::string(ss.str());
     }
 }
 
@@ -187,6 +192,38 @@ void Memory::update(WPARAM vkCode)
     }
 }
 
+// -----------------------------------------------------------------------------
+// Dishonored 2
+
+std::unique_ptr<Memory> Dishonored2::Create(const std::wstring& targetProcessName)
+{
+    return std::make_unique<Dishonored2>(targetProcessName);
+}
+
+Dishonored2::Dishonored2(const std::wstring& targetProcessName)
+    : Memory(targetProcessName)
+{
+    m_mpMP = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x888589);
+
+    m_mapMethod["DISH2_INFINITE_MP_OFF"]    = std::bind(&Dishonored2::infiniteMPOff, this);
+    m_mapMethod["DISH2_INFINITE_MP_ON"]     = std::bind(&Dishonored2::infiniteMPOn, this);
+}
+
+void Dishonored2::infiniteMPOff()
+{
+    std::vector<uint8_t> buffer{ 0xF3, 0x0F, 0x11, 0x4B, 0x20 };
+    g_console.printResult(m_mpMP->setBytes(buffer), "DISH2_INFINITE_MP_OFF");
+}
+
+void Dishonored2::infiniteMPOn()
+{
+    std::vector<uint8_t> buffer{ 0x90, 0x90, 0x90, 0x90, 0x90 };
+    g_console.printResult(m_mpMP->setBytes(buffer), "DISH2_INFINITE_MP_ON");
+}
+
+// -----------------------------------------------------------------------------
+// Mark of the Ninja
+
 std::unique_ptr<Memory> NinjaMemory::Create(const std::wstring& targetProcessName)
 {
     return std::make_unique<NinjaMemory>(targetProcessName);
@@ -198,19 +235,19 @@ NinjaMemory::NinjaMemory(const std::wstring& targetProcessName)
     m_mpInfinityItems   = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x2A297B);
     m_mpInstantCast     = std::make_unique<MultilevelPointer>(m_processHandle, m_baseAddress + 0x2A47E8);
 
-    m_mapMethod["NINJA_INFINITE_ITEMS_OFF"] = std::bind(&NinjaMemory::infinityItemsOff, this);
-    m_mapMethod["NINJA_INFINITE_ITEMS_ON"]  = std::bind(&NinjaMemory::infinityItemsOn, this);
+    m_mapMethod["NINJA_INFINITE_ITEMS_OFF"] = std::bind(&NinjaMemory::infiniteItemsOff, this);
+    m_mapMethod["NINJA_INFINITE_ITEMS_ON"]  = std::bind(&NinjaMemory::infiniteItemsOn, this);
     m_mapMethod["NINJA_INSTANT_CAST_OFF"]   = std::bind(&NinjaMemory::instantCastOff, this);
     m_mapMethod["NINJA_INSTANT_CAST_ON"]    = std::bind(&NinjaMemory::instantCastOn, this);
 }
 
-void NinjaMemory::infinityItemsOff()
+void NinjaMemory::infiniteItemsOff()
 {
     std::vector<uint8_t> buffer{ 0xFF, 0x4B, 0x04 };
     g_console.printResult(m_mpInfinityItems->setBytes(buffer), "NINJA_INFINITE_ITEMS_OFF");
 }
 
-void NinjaMemory::infinityItemsOn()
+void NinjaMemory::infiniteItemsOn()
 {
     std::vector<uint8_t> buffer{ 0x90, 0x90, 0x90 };
     g_console.printResult(m_mpInfinityItems->setBytes(buffer), "NINJA_INFINITE_ITEMS_ON");
@@ -227,6 +264,9 @@ void NinjaMemory::instantCastOn()
     std::vector<uint8_t> buffer { 0xC7, 0x43, 0x08, 0x00, 0x00, 0x00, 0x00, 0xEB, 0x29, 0x90, 0x90, 0x90, 0x90, 0x90 };
     g_console.printResult(m_mpInstantCast->setBytes(buffer), "NINJA_INSTANT_CAST_ON");
 }
+
+// -----------------------------------------------------------------------------
+// Resident Evil 2 Remake
 
 std::unique_ptr<Memory> RE2Memory::Create(const std::wstring& targetProcessName)
 {
@@ -305,8 +345,12 @@ void RE2Memory::shotsNormal()
     g_console.printResult(m_mpShots->setBytes(buffer), "RE2_SHOTS_NORMAL");
 }
 
+// -----------------------------------------------------------------------------
+// MemoryFactory
+
 MemoryFactory::MemoryFactory()
 {
+    registerConstructor(L"dish2",   &Dishonored2::Create);
     registerConstructor(L"ninja",   &NinjaMemory::Create);
     registerConstructor(L"re2",     &RE2Memory::Create);
 }
