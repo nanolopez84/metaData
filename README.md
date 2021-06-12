@@ -10,8 +10,8 @@ You can safely see some videos at [this YouTube channel](https://www.youtube.com
 * Add the executable as an exception in the configuration of your antivirus (due to the nature of this software, is targeted as a potential harmful program)
 
 ### Games avaliables
-All this games need to be played from Steam. Other binaries will be of no use with this software. This is **NOT** an exploit from Steam's software, instead, it's more like adversiting, because that is the platform I use to actually play the games I love :-)
-Keep in mind that if the developers get upset with this, they may release a new build and the hacks will be version incompatible (and I will not start a nonsense race reverse engineering and updating this software).
+All this games need to be played from Steam. Other binaries will be of no use with this software. This is **NOT** an exploit from Steam's software, instead, it's more like adversiting, because that is the platform I use to actually play the games I love :-)\
+Keep in mind that if the developers get upset with this, they may release a new build and the hacks will be version incompatible (and I will not start a nonsense race reverse engineering and updating this software).\
 The list so far:
 * **Dishonored 2**
 * **Mark of the Ninja**
@@ -44,9 +44,9 @@ NINJA_INFINITE_ITEMS_OFF                                    Z
 NINJA_INFINITE_ITEMS_ON                                     V
 ```
 
-While your playing the game, if you press *C* key, the **metaData** console will give you a message showing that casting a trick won't have any cooldown (you may use 2 screens, play the game in window mode, or just ignore the **metaData** console and keep playing the game in fullscreen mode). If you want to disable the cooldown hack, you may press *X* while in game and the delay between tricks executions will return to normal.
-Due to the fact that this software hooks low level API keyboard calls, you don't have to switch focus to enable/disable hacks. This allows infinite possibilites to explore!
-Be aware that in Resident Evil 2 the *Full Damage* hack will also kill you instantly if you get a single point of damage!
+While your playing the game, if you press *C* key, the **metaData** console will give you a message showing that casting a trick won't have any cooldown (you may use 2 screens, play the game in window mode, or just ignore the **metaData** console and keep playing the game in fullscreen mode). If you want to disable the cooldown hack, you may press *X* while in game and the delay between tricks executions will return to normal.\
+Due to the fact that this software hooks low level API keyboard calls, you don't have to switch focus to enable/disable hacks. This allows infinite possibilites to explore!\
+Be aware that in Resident Evil 2 the *Full Damage* hack will also kill you instantly if you get a single point of damage!\
 Read the *keyMapping.cfg* file to learn all the hacks implemented.
 
 ## Final note
